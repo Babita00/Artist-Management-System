@@ -26,30 +26,30 @@ export const registerSuperAdmin = async (
     role: 'super_admin',
   })
 
-  // Exclude password from the return object
   const { password, ...userWithoutPassword } = newUser
   return userWithoutPassword
 }
 
 export const loginUser = async (email: string, passwordString: string) => {
   const user = await findUserByEmail(email)
+
   if (!user || !user.password) {
     throw new Error('Invalid email or password')
   }
 
   const isPasswordValid = await bcrypt.compare(passwordString, user.password)
+
   if (!isPasswordValid) {
     throw new Error('Invalid email or password')
   }
 
-  const token = generateToken(user)
+  const accessToken = generateToken(user)
 
-  // Exclude password from the return object
   const { password, ...userWithoutPassword } = user
 
   return {
     user: userWithoutPassword,
-    token,
+    accessToken,
   }
 }
 
