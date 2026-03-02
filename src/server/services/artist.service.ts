@@ -2,6 +2,7 @@ import {
   countAllArtists,
   findArtistsPaginated,
   findArtistById,
+  findAllArtists,
   createArtistInDb,
   updateArtistInDb,
   deleteArtistInDb
@@ -16,6 +17,10 @@ export const getAllArtists = async (page?: number, limit?: number) => {
     async (limit, offset) => findArtistsPaginated(limit, offset),
     async () => countAllArtists()
   )
+}
+
+export const getAllArtistsExport = async () => {
+  return findAllArtists()
 }
 
 export const getArtistById = async (id: string) => {

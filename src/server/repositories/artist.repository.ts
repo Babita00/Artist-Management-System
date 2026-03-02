@@ -17,6 +17,15 @@ export const findArtistsPaginated = async (limit: number, offset: number): Promi
   return result.rows
 }
 
+export const findAllArtists = async (): Promise<Artist[]> => {
+  const result = await pool.query(
+    `SELECT id, name, dob, gender, address, first_release_year, no_of_albums_released, created_at, updated_at 
+     FROM artists 
+     ORDER BY created_at DESC`
+  )
+  return result.rows
+}
+
 export const findArtistById = async (id: string): Promise<Artist | null> => {
   const result = await pool.query(
     `SELECT id, name, dob, gender, address, first_release_year, no_of_albums_released, created_at, updated_at 
