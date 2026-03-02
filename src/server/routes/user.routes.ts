@@ -1,7 +1,11 @@
 import { Router } from 'express'
 import { getAll, getById, create, update, remove } from '../controllers/user.controller'
 import { isAuthenticated, isSuperAdmin } from '../middlewares/auth.middleware'
-import { createValidator, updateValidator, validateUserId } from '../validators/user.validator'
+import {
+  createValidator,
+  updateValidator,
+  validateUserId,
+} from '../validators/user.validator'
 
 const router = Router()
 

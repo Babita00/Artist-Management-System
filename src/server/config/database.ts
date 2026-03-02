@@ -18,11 +18,8 @@ pool.on('error', err => {
 export const initDb = async () => {
   const client = await pool.connect()
   try {
-    // Enable uuid-ossp extension for gen_random_uuid() or uuid_generate_v4()
-    // PostgreSQL 13+ has gen_random_uuid() built-in, but just in case:
     await client.query(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp";`)
 
-    // Create ENUM types if they don't exist
     await client.query(`
       DO $$ BEGIN
         CREATE TYPE user_role AS ENUM ('super_admin', 'artist_manager', 'a');
@@ -31,7 +28,7 @@ export const initDb = async () => {
       END $$;
     `)
 
-    // 1. Users table
+    //  Users table
     await client.query(`
       CREATE TABLE IF NOT EXISTS users (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -51,7 +48,7 @@ export const initDb = async () => {
       CREATE INDEX IF NOT EXISTS idx_users_updated_at ON users(updated_at);
     `)
 
-    // 2. Artists table
+    //  Artists table
     await client.query(`
       CREATE TABLE IF NOT EXISTS artists (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -68,7 +65,7 @@ export const initDb = async () => {
       CREATE INDEX IF NOT EXISTS idx_artists_updated_at ON artists(updated_at);
     `)
 
-    // 3. Songs table
+    // Songs table
     await client.query(`
       CREATE TABLE IF NOT EXISTS songs (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
