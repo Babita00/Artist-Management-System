@@ -1,5 +1,7 @@
 import express from 'express'
 import cors from 'cors'
+import routes from './routes'
+import { logger } from './utils/logger'
 
 const app = express()
 
@@ -8,12 +10,7 @@ app.use(cors())
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
-// Health check
-app.get('/api', (_req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() })
-})
-
-// TODO: Register TSOA routes
-// TODO: Error handling middleware
+// API Routes
+app.use('/api/v1', routes)
 
 export { app }
