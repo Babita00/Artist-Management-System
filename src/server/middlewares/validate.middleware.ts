@@ -19,11 +19,12 @@ export const validate = (schema: ObjectSchema | ZodSchema) => {
         return errorResponse(res, STATUS.BAD_REQUEST, 'Validation error')
       }
     } else {
-      const { error } = (schema as ObjectSchema).validate(req.body, { abortEarly: false })
+      const { error } = (schema as ObjectSchema).validate(req.body, {
+        abortEarly: false,
+      })
 
       if (error) {
-        // Map Joi's detail array into a single readable string message or array of messages
-        const errorMessage = error.details.map((detail) => detail.message).join(', ')
+        const errorMessage = error.details.map(detail => detail.message).join(', ')
         return errorResponse(res, STATUS.BAD_REQUEST, errorMessage)
       }
 

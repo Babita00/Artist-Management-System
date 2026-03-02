@@ -4,27 +4,13 @@ import { successResponse, errorResponse } from '../utils/response'
 import { HttpStatusCodes as STATUS } from '../constants/httpStatusCodes'
 
 export const register = async (req: Request, res: Response) => {
-  try {
-    const user = await authService.registerSuperAdmin(req.body)
-    return successResponse(
-      res,
-      STATUS.CREATED,
-      'Super Admin registered successfully',
-      user
-    )
-  } catch (error: any) {
-    if (
-      error.message === 'Email already in use' ||
-      error.message === 'Password is required'
-    ) {
-      return errorResponse(res, STATUS.BAD_REQUEST, error.message)
-    }
-    return errorResponse(
-      res,
-      STATUS.INTERNAL_SERVER_ERROR,
-      error.message || 'Internal server error'
-    )
-  }
+  const user = await authService.registerSuperAdmin(req.body)
+  return successResponse(
+    res,
+    STATUS.CREATED,
+    'Super Admin registered successfully',
+    user
+  )
 }
 
 export const login = async (req: Request, res: Response) => {
