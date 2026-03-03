@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { z } from 'zod'
-import { zodResolver } from '@hookform/resolvers/zod'
+import { formatDate } from '@/lib/utils'
 import {
   Dialog,
   DialogContent,
@@ -32,16 +31,9 @@ import { handleFormError } from '@/lib/handleError'
 import { addDataSuccessMessage, editDataSuccessMessage } from '@/constants/messages'
 import { Artist } from '~/types'
 
-const artistSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  dob: z.string().min(1, 'Date of birth is required'),
-  gender: z.enum(['M', 'F', 'O'] as const),
-  address: z.string().min(1, 'Address is required'),
-  first_release_year: z.string().min(1, 'Year is required'),
-  no_of_albums_released: z.string(),
-})
-
-type ArtistFormValues = z.infer<typeof artistSchema>
+type ArtistFormValues = Omit<Artist, 'id' | 'created_at' | 'updated_at' | 'dob'> & {
+  dob: string
+}
 
 interface ArtistFormModalProps {
   isOpen: boolean
@@ -60,14 +52,13 @@ const ArtistFormModal: React.FC<ArtistFormModalProps> = ({
   const isEdit = !!initialValue
 
   const form = useForm<ArtistFormValues>({
-    resolver: zodResolver(artistSchema),
     defaultValues: {
       name: '',
       dob: '',
       gender: 'M',
       address: '',
-      first_release_year: String(new Date().getFullYear()),
-      no_of_albums_released: '0',
+      first_release_year: new Date().getFullYear(),
+      no_of_albums_released: 0,
     },
   })
 
@@ -78,12 +69,9 @@ const ArtistFormModal: React.FC<ArtistFormModalProps> = ({
         name: initialValue.name,
         gender: initialValue.gender ?? 'M',
         address: initialValue.address,
-        first_release_year: String(initialValue.first_release_year),
-        no_of_albums_released: String(initialValue.no_of_albums_released),
-        dob:
-          typeof initialValue.dob === 'string'
-            ? initialValue.dob.split('T')[0]
-            : new Date(initialValue.dob).toISOString().split('T')[0],
+        first_release_year: initialValue.first_release_year,
+        no_of_albums_released: initialValue.no_of_albums_released,
+        dob: formatDate(initialValue.dob),
       })
     } else {
       form.reset({
@@ -91,26 +79,20 @@ const ArtistFormModal: React.FC<ArtistFormModalProps> = ({
         dob: '',
         gender: 'M',
         address: '',
-        first_release_year: String(new Date().getFullYear()),
-        no_of_albums_released: '0',
+        first_release_year: new Date().getFullYear(),
+        no_of_albums_released: 0,
       })
     }
   }, [isOpen, initialValue])
 
   const onFinish = async (values: ArtistFormValues) => {
     setIsPending(true)
-    // Coerce number fields before sending to API
-    const payload = {
-      ...values,
-      first_release_year: Number(values.first_release_year),
-      no_of_albums_released: Number(values.no_of_albums_released),
-    }
     try {
       if (isEdit) {
-        await updateArtistAPI(initialValue!.id, payload)
+        await updateArtistAPI(initialValue!.id, values)
         toast.success(editDataSuccessMessage('Artist'))
       } else {
-        await createArtistAPI(payload)
+        await createArtistAPI(values)
         toast.success(addDataSuccessMessage('Artist'))
       }
       onSuccess()
@@ -196,7 +178,12 @@ const ArtistFormModal: React.FC<ArtistFormModalProps> = ({
                   <FormItem>
                     <FormLabel>First Release Year</FormLabel>
                     <FormControl>
-                      <Input type="number" placeholder="2020" {...field} />
+                      <Input
+                        type="number"
+                        placeholder="2020"
+                        {...field}
+                        onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -209,7 +196,12 @@ const ArtistFormModal: React.FC<ArtistFormModalProps> = ({
                   <FormItem>
                     <FormLabel>Albums Released</FormLabel>
                     <FormControl>
-                      <Input type="number" placeholder="0" {...field} />
+                      <Input
+                        type="number"
+                        placeholder="0"
+                        {...field}
+                        onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

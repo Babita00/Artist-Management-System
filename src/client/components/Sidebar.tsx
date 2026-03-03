@@ -17,11 +17,8 @@ const Sidebar = () => {
   const navigate = useNavigate()
 
   const handleLogout = async () => {
-    try {
-      await logoutAPI()
-    } catch {
-      // clear locally regardless
-    }
+    await logoutAPI()
+
     clearTokens()
     navigate('/login')
   }
@@ -30,13 +27,29 @@ const Sidebar = () => {
     switch (user?.role) {
       case 'super_admin':
         return [
-          { to: '/dashboard/users', label: 'Users', icon: <Users className="size-4 shrink-0" /> },
-          { to: '/dashboard/artists', label: 'Artists', icon: <Mic2 className="size-4 shrink-0" /> },
+          {
+            to: '/dashboard/users',
+            label: 'Users',
+            icon: <Users className="size-4 shrink-0" />,
+          },
+          {
+            to: '/dashboard/artists',
+            label: 'Artists',
+            icon: <Mic2 className="size-4 shrink-0" />,
+          },
         ]
       case 'artist_manager':
         return [
-          { to: '/dashboard/artists', label: 'Artists', icon: <Mic2 className="size-4 shrink-0" /> },
-          { to: '/dashboard/songs', label: 'Songs', icon: <Music2 className="size-4 shrink-0" /> },
+          {
+            to: '/dashboard/artists',
+            label: 'Artists',
+            icon: <Mic2 className="size-4 shrink-0" />,
+          },
+          {
+            to: '/dashboard/songs',
+            label: 'Songs',
+            icon: <Music2 className="size-4 shrink-0" />,
+          },
         ]
       case 'artist':
         return [
@@ -94,7 +107,7 @@ const Sidebar = () => {
 
       {/* Nav Links */}
       <nav className="flex-1 px-2 py-4 space-y-1">
-        {getNavItems().map((item) => (
+        {getNavItems().map(item => (
           <NavLink
             key={item.to}
             to={item.to}

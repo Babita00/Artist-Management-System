@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button'
 import { getArtistByIdAPI } from '../services/artist.api'
 import { getAllSongsAPI, deleteSongAPI } from '../services/song.api'
 import { Artist, Song } from '~/types'
-import { useAuthStore } from '../store'
+import { usePermissions } from '../hooks/usePermissions'
 import SongFormModal from '../components/SongFormModal'
 import DeleteModal from '../components/DeleteModal'
 import SearchInput from '../components/SearchInput'
@@ -21,23 +21,14 @@ import { PAGE_LIMIT } from '@/constants/pagination'
 import { handleAPIError } from '@/lib/handleError'
 import { toast } from 'sonner'
 import { deleteDataSuccessMessage } from '@/constants/messages'
+import { GENRE_COLORS } from '@/constants/themeColors'
 import { ArrowLeft, Pencil, Plus, Trash2 } from 'lucide-react'
-
-const GENRE_COLORS: Record<string, string> = {
-  rnb: 'bg-purple-100 text-purple-600',
-  country: 'bg-amber-100 text-amber-600',
-  classic: 'bg-slate-100 text-slate-600',
-  rock: 'bg-red-100 text-red-600',
-  jazz: 'bg-indigo-100 text-indigo-600',
-  pop: 'bg-pink-100 text-pink-600',
-}
 
 const SongsPage = () => {
   const { artistId } = useParams<{ artistId: string }>()
   const navigate = useNavigate()
 
-  const currentUser = useAuthStore((state) => state.user)
-  const canManageSongs = currentUser?.role === 'artist'
+  const { canManageSongs } = usePermissions()
 
   const [artist, setArtist] = useState<Artist | null>(null)
   const [songs, setSongs] = useState<Song[]>([])

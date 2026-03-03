@@ -11,7 +11,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { getAllSongsAPI } from '../services/song.api'
 import { Song } from '~/types'
-import { useAuthStore } from '../store'
+import { usePermissions } from '../hooks/usePermissions'
 import { handleAPIError } from '@/lib/handleError'
 
 const AllSongsPage = () => {
@@ -19,9 +19,7 @@ const AllSongsPage = () => {
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
 
-  const currentUser = useAuthStore((state) => state.user)
-  const isManagerOrAdmin =
-    currentUser?.role === 'super_admin' || currentUser?.role === 'artist_manager'
+  const { isManagerOrAdmin } = usePermissions()
 
   const loadSongs = async () => {
     setLoading(true)

@@ -10,14 +10,14 @@ import {
 import { Button } from '@/components/ui/button'
 import { getAllUsersAPI, deleteUserAPI } from '../services/user.api'
 import { User } from '~/types'
-import { useAuthStore } from '../store'
 import { Navigate } from 'react-router-dom'
+import { usePermissions } from '../hooks/usePermissions'
 import UserFormModal from '../components/userModal'
 import DeleteModal from '../components/DeleteModal'
 import { handleAPIError } from '@/lib/handleError'
 import { toast } from 'sonner'
 import { deleteDataSuccessMessage } from '@/constants/messages'
-import { ROLE_COLORS, ROLE_LABELS } from '@/constants/roleColors'
+import { ROLE_COLORS, ROLE_LABELS } from '@/constants/themeColors'
 import { Pencil, Plus, Trash2 } from 'lucide-react'
 import SearchInput from '../components/SearchInput'
 import Pagination from '../components/Pagination'
@@ -32,14 +32,12 @@ const UsersPage = () => {
   const [editingUser, setEditingUser] = useState<User | null>(null)
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null)
   const [page, setPage] = useState(1)
-  const limit = PAGE_LIMIT
-
-  const currentUser = useAuthStore(state => state.user)
+  const { isSuperAdmin } = usePermissions()
 
   const loadUsers = async () => {
     setLoading(true)
     try {
-      const resp = await getAllUsersAPI({ page, limit })
+      const resp = await getAllUsersAPI({ page, limit: PAGE_LIMIT })
       const userList = Array.isArray(resp) ? resp : (resp as any).users || (resp as any).data || []
       const total = (resp as any).total ?? userList.length
       setUsers(userList)
@@ -52,10 +50,10 @@ const UsersPage = () => {
   }
 
   useEffect(() => {
-    if (currentUser?.role === 'super_admin') loadUsers()
-  }, [page, currentUser])
+    if (isSuperAdmin) loadUsers()
+  }, [page, isSuperAdmin])
 
-  if (currentUser?.role !== 'super_admin') {
+  if (!isSuperAdmin) {
     return <Navigate to="/dashboard" replace />
   }
 
@@ -82,7 +80,7 @@ const UsersPage = () => {
   }
 
 
-  const totalPages = Math.max(1, Math.ceil(totalUsers / limit))
+  const totalPages = Math.max(1, Math.ceil(totalUsers / PAGE_LIMIT))
 
   const filtered = users.filter(u => {
     const q = search.toLowerCase()
@@ -95,7 +93,6 @@ const UsersPage = () => {
 
   return (
     <div className="p-6 space-y-6">
-      {/* Page header */}
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">User Management</h1>
@@ -107,9 +104,7 @@ const UsersPage = () => {
         </Button>
       </div>
 
-      {/* Card */}
       <div className="bg-card rounded-xl border shadow-sm">
-        {/* Search */}
         <div className="p-4 border-b">
           <SearchInput
             value={search}
@@ -118,7 +113,6 @@ const UsersPage = () => {
           />
         </div>
 
-        {/* Table */}
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">

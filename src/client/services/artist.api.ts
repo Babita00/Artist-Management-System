@@ -39,11 +39,9 @@ export const deleteArtistAPI = (id: string) => {
 }
 
 export const exportArtistsAPI = () => {
-  // We use standard fetch/axios here, but since it's a blob/csv, we might need a custom config
-  // For basic download, sometimes standard request works if we specify responseType: 'blob'
   return request({
     url: `${ENDPOINTS.ARTISTS}/export`,
-    responseType: 'blob' as any, // bypassing the standard strict type to allow blob
+    responseType: 'blob' as any,
   })
 }
 

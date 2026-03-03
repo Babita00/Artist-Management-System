@@ -99,7 +99,6 @@ const Login = () => {
                 )}
               />
 
-              {/* Password with Toggle */}
               <FormField
                 control={form.control}
                 name="password"
@@ -134,7 +133,6 @@ const Login = () => {
                 )}
               />
 
-              {/* Register CTA - Improved UX */}
               <div className="text-center text-sm bg-muted/40 p-3 rounded-lg">
                 <span className="text-muted-foreground">
                   Don’t have an account?

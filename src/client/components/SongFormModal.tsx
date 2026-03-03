@@ -1,7 +1,5 @@
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { z } from 'zod'
-import { zodResolver } from '@hookform/resolvers/zod'
 import {
   Dialog,
   DialogContent,
@@ -31,16 +29,11 @@ import { createSongAPI, updateSongAPI } from '../services/song.api'
 import { handleFormError } from '@/lib/handleError'
 import { addDataSuccessMessage, editDataSuccessMessage } from '@/constants/messages'
 import { Song } from '~/types'
+import { SONG_GENRES, GenreValue } from '@/constants/genres'
 
-const songSchema = z.object({
-  title: z.string().min(1, 'Title is required'),
-  album_name: z.string().min(1, 'Album name is required'),
-  genre: z.enum(['rnb', 'country', 'classic', 'rock', 'jazz', 'pop'] as const, {
-    message: 'Genre is required',
-  }),
-})
-
-type SongFormValues = z.infer<typeof songSchema>
+type SongFormValues = Omit<Song, 'id' | 'created_at' | 'updated_at' | 'artist_id' | 'genre'> & {
+  genre: GenreValue
+}
 
 interface SongFormModalProps {
   isOpen: boolean
@@ -61,7 +54,6 @@ const SongFormModal: React.FC<SongFormModalProps> = ({
   const isEdit = !!initialValue
 
   const form = useForm<SongFormValues>({
-    resolver: zodResolver(songSchema),
     defaultValues: { title: '', album_name: '', genre: 'pop' },
   })
 
@@ -71,7 +63,7 @@ const SongFormModal: React.FC<SongFormModalProps> = ({
       form.reset({
         title: initialValue.title,
         album_name: initialValue.album_name,
-        genre: (initialValue.genre as SongFormValues['genre']) ?? 'pop',
+        genre: (initialValue.genre as GenreValue) ?? 'pop',
       })
     } else {
       form.reset({ title: '', album_name: '', genre: 'pop' })
@@ -153,12 +145,11 @@ const SongFormModal: React.FC<SongFormModalProps> = ({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="pop">Pop</SelectItem>
-                      <SelectItem value="rock">Rock</SelectItem>
-                      <SelectItem value="jazz">Jazz</SelectItem>
-                      <SelectItem value="rnb">R&B</SelectItem>
-                      <SelectItem value="country">Country</SelectItem>
-                      <SelectItem value="classic">Classic</SelectItem>
+                      {SONG_GENRES.map((g) => (
+                        <SelectItem key={g.value} value={g.value}>
+                          {g.label}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <FormMessage />

@@ -17,10 +17,10 @@ import {
   importArtistsAPI,
 } from '../services/artist.api'
 import { Artist } from '~/types'
-import { useAuthStore } from '../store'
 import ArtistFormModal from '../components/ArtistFormModal'
 import DeleteModal from '../components/DeleteModal'
 import SearchInput from '../components/SearchInput'
+import { usePermissions } from '../hooks/usePermissions'
 import { handleAPIError } from '@/lib/handleError'
 import { downloadCsv, submitCsvImport } from '@/lib/csvUtils'
 import { toast } from 'sonner'
@@ -49,10 +49,7 @@ const ArtistsPage = () => {
   const [page, setPage] = useState(1)
   const limit = PAGE_LIMIT
 
-  const currentUser = useAuthStore((state) => state.user)
-  const isManagerOrAdmin =
-    currentUser?.role === 'super_admin' || currentUser?.role === 'artist_manager'
-  const canManageArtists = currentUser?.role === 'artist_manager'
+  const { currentUser, isManagerOrAdmin, canManageArtists } = usePermissions()
 
   const loadArtists = async () => {
     if (!isManagerOrAdmin) return
