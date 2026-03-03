@@ -26,19 +26,20 @@ import {
 } from '@/components/ui/select'
 import { toast } from 'sonner'
 import { createSongAPI, updateSongAPI } from '../services/song.api'
-import { handleFormError } from '@/lib/handleError'
-import { addDataSuccessMessage, editDataSuccessMessage } from '@/constants/messages'
-import { Song } from '~/types'
+import { getAllArtistsAPI } from '../services/artist.api'
+import { handleFormError, handleAPIError } from '@/lib/handleError'
+import { Song, Artist } from '~/types'
 import { SONG_GENRES, GenreValue } from '@/constants/constants'
 
 type SongFormValues = Omit<Song, 'id' | 'created_at' | 'updated_at' | 'artist_id' | 'genre'> & {
   genre: GenreValue
+  artist_id?: string
 }
 
 interface SongFormModalProps {
   isOpen: boolean
   initialValue: Song | null
-  artistId: string
+  artistId?: string
   onClose: () => void
   onSuccess: () => void
 }
@@ -52,10 +53,33 @@ const SongFormModal: React.FC<SongFormModalProps> = ({
 }) => {
   const [isPending, setIsPending] = useState(false)
   const isEdit = !!initialValue
+  const [artists, setArtists] = useState<Artist[]>([])
+  const [loadingArtists, setLoadingArtists] = useState(false)
 
   const form = useForm<SongFormValues>({
     defaultValues: { title: '', album_name: '', genre: 'pop' },
   })
+
+  useEffect(() => {
+    const fetchArtists = async () => {
+      setLoadingArtists(true)
+      try {
+        const resp = await getAllArtistsAPI({ page: 1, limit: 1000 })
+        const artistList = Array.isArray(resp)
+          ? resp
+          : (resp as any).artists || (resp as any).data || []
+        setArtists(artistList)
+      } catch (err) {
+        handleAPIError(err)
+      } finally {
+        setLoadingArtists(false)
+      }
+    }
+
+    if (isOpen && !artistId) {
+      fetchArtists()
+    }
+  }, [isOpen, artistId])
 
   useEffect(() => {
     if (!isOpen) return
@@ -64,21 +88,26 @@ const SongFormModal: React.FC<SongFormModalProps> = ({
         title: initialValue.title,
         album_name: initialValue.album_name,
         genre: (initialValue.genre as GenreValue) ?? 'pop',
+        artist_id: initialValue.artist_id,
       })
     } else {
-      form.reset({ title: '', album_name: '', genre: 'pop' })
+      form.reset({ title: '', album_name: '', genre: 'pop', artist_id: artistId ?? '' })
     }
-  }, [isOpen, initialValue])
+  }, [isOpen, initialValue, artistId])
 
   const onFinish = async (values: SongFormValues) => {
+    const finalArtistId = artistId || values.artist_id
+    if (!finalArtistId) {
+      toast.error('Please select an artist')
+      return
+    }
+
     setIsPending(true)
     try {
       if (isEdit) {
-        await updateSongAPI(initialValue!.id, { ...values, artist_id: artistId })
-        toast.success(editDataSuccessMessage('Song'))
+        await updateSongAPI(initialValue!.id, { ...values, artist_id: finalArtistId })
       } else {
-        await createSongAPI({ ...values, artist_id: artistId })
-        toast.success(addDataSuccessMessage('Song'))
+        await createSongAPI({ ...values, artist_id: finalArtistId })
       }
       onSuccess()
       onClose()
@@ -106,6 +135,33 @@ const SongFormModal: React.FC<SongFormModalProps> = ({
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onFinish)} className="space-y-4">
+            {!artistId && (
+              <FormField
+                control={form.control}
+                name="artist_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Artist</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value} disabled={loadingArtists || isEdit}>
+                      <FormControl>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder={loadingArtists ? "Loading..." : "Select artist"} />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {artists.map((a) => (
+                          <SelectItem key={a.id} value={a.id}>
+                            {a.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+            
             <FormField
               control={form.control}
               name="title"

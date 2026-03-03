@@ -30,7 +30,7 @@ export const createSongAPI = (data: Partial<Song>) => {
 export const updateSongAPI = (id: string, data: Partial<Song>) => {
   return request<Song>({
     url: `${ENDPOINTS.SONGS}/${id}`,
-    method: 'PUT',
+    method: 'PATCH',
     data,
   })
 }

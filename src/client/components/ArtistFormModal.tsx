@@ -25,10 +25,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { toast } from 'sonner'
 import { createArtistAPI, updateArtistAPI } from '../services/artist.api'
 import { handleFormError } from '@/lib/handleError'
-import { addDataSuccessMessage, editDataSuccessMessage } from '@/constants/messages'
 import { Artist } from '~/types'
 
 type ArtistFormValues = Omit<Artist, 'id' | 'created_at' | 'updated_at' | 'dob'> & {
@@ -90,10 +88,8 @@ const ArtistFormModal: React.FC<ArtistFormModalProps> = ({
     try {
       if (isEdit) {
         await updateArtistAPI(initialValue!.id, values)
-        toast.success(editDataSuccessMessage('Artist'))
       } else {
         await createArtistAPI(values)
-        toast.success(addDataSuccessMessage('Artist'))
       }
       onSuccess()
       onClose()

@@ -9,7 +9,7 @@ export const usePermissions = () => {
 
   const isManagerOrAdmin = isSuperAdmin || isArtistManager
   const canManageArtists = isArtistManager
-  const canManageSongs = isArtistManager || isArtist
+  const canManageSongs = isArtist
 
   return {
     currentUser,

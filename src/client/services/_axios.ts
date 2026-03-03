@@ -1,5 +1,7 @@
 import axios, { AxiosInstance } from 'axios'
 import { useAuthStore } from '../store' 
+import { toast } from 'sonner'
+import { FALLBACK_ERROR } from '@/constants/messages'
 
 export interface IRequestOptions {
   url: string
@@ -25,11 +27,23 @@ instance.interceptors.request.use(config => {
 })
 
 instance.interceptors.response.use(
-  res => res,
+  res => {
+    if (res.config.method?.toLowerCase() !== 'get' && res.data?.message) {
+      toast.success(res.data.message)
+    }
+    return res
+  },
   async error => {
     if (error.response?.status === 401) {
       useAuthStore.getState().clearTokens()
     }
+    
+    if (error.response?.data?.message) {
+      toast.error(error.response.data.message)
+    } else if (error.message !== 'canceled') {
+      toast.error(FALLBACK_ERROR)
+    }
+    
     return Promise.reject(error)
   }
 )
