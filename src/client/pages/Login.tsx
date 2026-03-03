@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { useState, useEffect } from 'react'
 import { loginAPI } from '../services/auth.api'
-import { toast } from 'sonner'
 import { handleFormError } from '@/lib/handleError'
 import { useAuthStore } from '../store'
 import { Link, useNavigate } from 'react-router-dom'
@@ -57,7 +56,6 @@ const Login = () => {
       if (token && user) {
         setCredentials({ accessToken: token }, user)
       }
-      toast.success('Login successful')
       navigate('/', { replace: true })
     } catch (err) {
       handleFormError(form, err)

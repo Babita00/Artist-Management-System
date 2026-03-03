@@ -15,8 +15,6 @@ import { usePermissions } from '../hooks/usePermissions'
 import UserFormModal from '../components/userModal'
 import DeleteModal from '../components/DeleteModal'
 import { handleAPIError } from '@/lib/handleError'
-import { toast } from 'sonner'
-import { deleteDataSuccessMessage } from '@/constants/messages'
 import { ROLE_COLORS } from '@/constants/themeColors'
 import { Pencil, Plus, Trash2 } from 'lucide-react'
 import SearchInput from '../components/SearchInput'
@@ -71,7 +69,6 @@ const UsersPage = () => {
   const handleDelete = async (id: string) => {
     try {
       await deleteUserAPI(id)
-      toast.success(deleteDataSuccessMessage('User'))
       loadUsers()
     } catch (err) {
       handleAPIError(err)

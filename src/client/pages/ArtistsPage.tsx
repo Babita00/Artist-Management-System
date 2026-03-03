@@ -23,8 +23,6 @@ import SearchInput from '../components/SearchInput'
 import { usePermissions } from '../hooks/usePermissions'
 import { handleAPIError } from '@/lib/handleError'
 import { downloadCsv, submitCsvImport } from '@/lib/csvUtils'
-import { toast } from 'sonner'
-import { deleteDataSuccessMessage } from '@/constants/messages'
 import {
   Dialog,
   DialogContent,
@@ -78,7 +76,6 @@ const ArtistsPage = () => {
   const handleDelete = async (id: string) => {
     try {
       await deleteArtistAPI(id)
-      toast.success(deleteDataSuccessMessage('Artist'))
       loadArtists()
     } catch (err) {
       handleAPIError(err)
@@ -95,7 +92,6 @@ const ArtistsPage = () => {
     if (!importFile) return
     const ok = await submitCsvImport(importFile, importArtistsAPI)
     if (ok) {
-      toast.success('Artists imported successfully!')
       setIsImportOpen(false)
       setImportFile(null)
       loadArtists()

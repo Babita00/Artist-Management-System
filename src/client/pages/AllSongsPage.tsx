@@ -13,13 +13,38 @@ import { getAllSongsAPI } from '../services/song.api'
 import { Song } from '~/types'
 import { usePermissions } from '../hooks/usePermissions'
 import { handleAPIError } from '@/lib/handleError'
+import { Plus, Pencil, Trash2 } from 'lucide-react'
+import SongFormModal from '../components/SongFormModal'
+import DeleteModal from '../components/DeleteModal'
+import { deleteSongAPI } from '../services/song.api'
 
 const AllSongsPage = () => {
   const [songs, setSongs] = useState<Song[]>([])
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [editingSong, setEditingSong] = useState<Song | null>(null)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [songToDelete, setSongToDelete] = useState<Song | null>(null)
 
-  const { isManagerOrAdmin } = usePermissions()
+  const { isManagerOrAdmin, canManageSongs } = usePermissions()
+
+  const handleDelete = async () => {
+    if (!songToDelete) return
+    try {
+      await deleteSongAPI(songToDelete.id)
+      if (songs.length === 1 && page > 1) {
+        setPage(page - 1)
+      } else {
+        loadSongs()
+      }
+    } catch (err) {
+      handleAPIError(err)
+    } finally {
+      setIsDeleteModalOpen(false)
+      setSongToDelete(null)
+    }
+  }
 
   const loadSongs = async () => {
     setLoading(true)
@@ -40,14 +65,25 @@ const AllSongsPage = () => {
     loadSongs()
   }, [page])
 
-  if (!isManagerOrAdmin) {
+  if (!isManagerOrAdmin && !canManageSongs) {
     return <div className="p-6">You do not have permission to view songs.</div>
   }
 
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold tracking-tight">Songs</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Music</h1>
+        {canManageSongs && (
+          <Button
+            className="gap-2"
+            onClick={() => {
+              setEditingSong(null)
+              setIsModalOpen(true)
+            }}
+          >
+            <Plus className="w-4 h-4" /> Add Song
+          </Button>
+        )}
       </div>
 
       <div className="border border-border/40 rounded-md">
@@ -57,7 +93,6 @@ const AllSongsPage = () => {
               <TableHead>Title</TableHead>
               <TableHead>Album</TableHead>
               <TableHead>Genre</TableHead>
-              <TableHead>Artist</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -84,20 +119,39 @@ const AllSongsPage = () => {
                       {song.genre}
                     </span>
                   </TableCell>
-                  <TableCell>
-                    <Link
-                      to={`/dashboard/artists/${song.artist_id}/songs`}
-                      className="text-primary hover:underline text-sm"
-                    >
-                      View Artist Songs
-                    </Link>
-                  </TableCell>
+             
                   <TableCell className="text-right">
-                    <Link to={`/dashboard/artists/${song.artist_id}/songs`}>
-                      <Button variant="secondary" size="sm" className="bg-primary/10 text-primary hover:bg-primary/20">
-                        View
-                      </Button>
-                    </Link>
+                    {canManageSongs ? (
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            setEditingSong(song)
+                            setIsModalOpen(true)
+                          }}
+                        >
+                          <Pencil className="w-4 h-4 text-primary" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => {
+                            setSongToDelete(song)
+                            setIsDeleteModalOpen(true)
+                          }}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <Link to={`/dashboard/artists/${song.artist_id}/songs`}>
+                        <Button variant="secondary" size="sm" className="bg-primary/10 text-primary hover:bg-primary/20">
+                          View
+                        </Button>
+                      </Link>
+                    )}
                   </TableCell>
                 </TableRow>
               ))
@@ -125,6 +179,25 @@ const AllSongsPage = () => {
           Next
         </Button>
       </div>
+      <SongFormModal
+        isOpen={isModalOpen}
+        initialValue={editingSong}
+        onClose={() => setIsModalOpen(false)}
+        onSuccess={() => {
+          setIsModalOpen(false)
+          setPage(1)
+          loadSongs()
+        }}
+      />
+      <DeleteModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false)
+          setSongToDelete(null)
+        }}
+        onConfirm={handleDelete}
+        title="Song"
+      />
     </div>
   )
 }

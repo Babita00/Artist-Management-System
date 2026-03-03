@@ -19,8 +19,6 @@ import SearchInput from '../components/SearchInput'
 import Pagination from '../components/Pagination'
 import { PAGE_LIMIT } from '@/constants/pagination'
 import { handleAPIError } from '@/lib/handleError'
-import { toast } from 'sonner'
-import { deleteDataSuccessMessage } from '@/constants/messages'
 import { GENRE_COLORS } from '@/constants/themeColors'
 import { ArrowLeft, Pencil, Plus, Trash2 } from 'lucide-react'
 
@@ -115,7 +113,6 @@ const SongsPage = () => {
   const handleDelete = async (id: string) => {
     try {
       await deleteSongAPI(id)
-      toast.success(deleteDataSuccessMessage('Song'))
       setDeletingSongId(null)
       setPage(1)
     } catch (err) {

@@ -13,12 +13,11 @@ import './App.css'
 function App() {
   const user = useAuthStore((state) => state.user)
 
-  // Determine dashboard index route dynamically based on role
   const getDashboardIndex = () => {
     if (user?.role === 'super_admin') return '/dashboard/users'
     if (user?.role === 'artist_manager') return '/dashboard/artists'
-    if (user?.role === 'artist') return `/dashboard/artists/${user.id}/songs`
-    return '/dashboard/artists' // fallback 
+    if (user?.role === 'artist') return `/dashboard/songs`
+    return '/dashboard/artists'  
   }
 
   return (

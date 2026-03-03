@@ -11,7 +11,7 @@ import {
 import {
   isAuthenticated,
   isArtistManager,
-  isSuperAdminOrArtistManager,
+  canViewArtists,
 } from '../middlewares/auth.middleware'
 import {
   createValidator,
@@ -24,11 +24,11 @@ const router = Router()
 
 router.use(isAuthenticated)
 
-router.get('/', isSuperAdminOrArtistManager, getAll)
+router.get('/', canViewArtists, getAll)
 router.get('/export', isArtistManager, exportCsv)
 router.post('/import', isArtistManager, upload.single('file'), importCsv)
 
-router.get('/:id', isSuperAdminOrArtistManager, validateArtistId, getById)
+router.get('/:id', canViewArtists, validateArtistId, getById)
 router.post('/', isArtistManager, createValidator, create)
 router.patch('/:id', isArtistManager, updateValidator, update)
 router.delete('/:id', isArtistManager, validateArtistId, remove)

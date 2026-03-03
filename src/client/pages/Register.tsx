@@ -13,7 +13,6 @@ import {
 } from '@/components/ui/select'
 import { useState } from 'react'
 import { registerAPI } from '../services/auth.api'
-import { toast } from 'sonner'
 import { handleFormError } from '@/lib/handleError'
 import { Link, useNavigate } from 'react-router-dom'
 import { UserPlus, Eye, EyeOff } from 'lucide-react'
@@ -67,7 +66,6 @@ const Register = () => {
     setIsLoading(true)
     try {
       await registerAPI(values)
-      toast.success('Registration successful! Please log in.')
       navigate('/login')
     } catch (err) {
       handleFormError(form, err)

@@ -26,10 +26,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { toast } from 'sonner'
 import { createUserAPI, updateUserAPI } from '../services/user.api'
 import { handleFormError } from '@/lib/handleError'
-import { addDataSuccessMessage, editDataSuccessMessage } from '@/constants/messages'
 import { User } from '~/types'
 import { Eye, EyeOff } from 'lucide-react'
 
@@ -118,10 +116,8 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
         const payload = { ...values }
         if (!payload.password) delete payload.password
         await updateUserAPI(initialValue!.id, payload)
-        toast.success(editDataSuccessMessage('User'))
       } else {
         await createUserAPI(values)
-        toast.success(addDataSuccessMessage('User'))
       }
       onSuccess()
       onClose()

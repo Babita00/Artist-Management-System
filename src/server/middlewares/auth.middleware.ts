@@ -59,4 +59,9 @@ const authorize = (allowedRoles: Role[]) => {
 export const isSuperAdmin = authorize(['super_admin'])
 export const isArtistManager = authorize(['artist_manager'])
 export const isArtist = authorize(['artist'])
-export const isSuperAdminOrArtistManager = authorize(['super_admin', 'artist_manager'])
+/*
+ISSUE: There is no direct link between the User Model (with 'artist' role) and the Artist Model.
+Thus, the role 'artist' user dictates the song, but they must provide artist info to create it.
+To create a song, the 'artist' role user should have read-only access to the artist info (to populate dropdowns).
+*/
+export const canViewArtists = authorize(['super_admin', 'artist_manager', 'artist'])

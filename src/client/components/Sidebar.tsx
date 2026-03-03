@@ -45,17 +45,13 @@ const Sidebar = () => {
             label: 'Artists',
             icon: <Mic2 className="size-4 shrink-0" />,
           },
-          {
-            to: '/dashboard/songs',
-            label: 'Songs',
-            icon: <Music2 className="size-4 shrink-0" />,
-          },
+          
         ]
       case 'artist':
         return [
           {
-            to: `/dashboard/artists/${user.id}/songs`,
-            label: 'My Songs',
+            to: `/dashboard/songs`,
+            label: 'Songs',
             icon: <Music2 className="size-4 shrink-0" />,
           },
         ]
