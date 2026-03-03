@@ -4,28 +4,37 @@ import { successResponse, errorResponse } from '../utils/response'
 import { HttpStatusCodes as STATUS } from '../constants/httpStatusCodes'
 
 export const register = async (req: Request, res: Response) => {
-  const user = await authService.registerSuperAdmin(req.body)
-  return successResponse(
-    res,
-    STATUS.CREATED,
-    'Super Admin registered successfully',
-    user
-  )
+  try {
+    const user = await authService.registerSuperAdmin(req.body)
+    return successResponse(res, STATUS.CREATED, 'Super Admin registered successfully', user)
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Registration failed'
+    return errorResponse(res, STATUS.BAD_REQUEST, message)
+  }
 }
 
 export const login = async (req: Request, res: Response) => {
-  const { email, password } = req.body
+  try {
+    const { email, password } = req.body
 
-  if (!email || !password) {
-    return errorResponse(res, STATUS.BAD_REQUEST, 'Email and password are required')
+    if (!email || !password) {
+      return errorResponse(res, STATUS.BAD_REQUEST, 'Email and password are required')
+    }
+
+    const data = await authService.loginUser(email, password)
+    return successResponse(res, STATUS.OK, 'Login successful', data)
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Login failed'
+    return errorResponse(res, STATUS.UNAUTHORIZED, message)
   }
-
-  const data = await authService.loginUser(email, password)
-  return successResponse(res, STATUS.OK, 'Login successful', data)
 }
 
 export const logout = async (req: Request, res: Response) => {
-  // The client is responsible for deleting the JWT from local storage/cookies
-  await authService.logoutUser()
-  return successResponse(res, STATUS.OK, 'Logged out successfully')
+  try {
+    await authService.logoutUser()
+    return successResponse(res, STATUS.OK, 'Logged out successfully')
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Logout failed'
+    return errorResponse(res, STATUS.INTERNAL_SERVER_ERROR, message)
+  }
 }
