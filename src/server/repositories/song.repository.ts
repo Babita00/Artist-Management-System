@@ -6,7 +6,7 @@ export const countSongs = async (artistId?: string): Promise<number> => {
   const countValues: any[] = []
 
   if (artistId) {
-    countQuery += ' AND artist_id = $1'
+    countQuery += ' WHERE artist_id = $1'
     countValues.push(artistId)
   }
 
@@ -17,15 +17,13 @@ export const countSongs = async (artistId?: string): Promise<number> => {
 export const findSongsPaginated = async (limit: number, offset: number, artistId?: string): Promise<Song[]> => {
   let dataQuery = `SELECT id, artist_id, title, album_name, genre, created_at, updated_at 
                    FROM songs`
-  const dataValues: any[] = []
-
+  const dataValues: any[] = [limit, offset] 
   if (artistId) {
     dataQuery += ' WHERE artist_id = $3'
-    dataValues.push(artistId)
+    dataValues.push(artistId) // $3 = artistId
   }
 
   dataQuery += ` ORDER BY created_at DESC LIMIT $1 OFFSET $2`
-  dataValues.unshift(limit, offset) // $1 = limit, $2 = offset, $3 = artistId (if exists)
 
   const result = await pool.query(dataQuery, dataValues)
   return result.rows

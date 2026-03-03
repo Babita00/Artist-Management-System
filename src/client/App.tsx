@@ -1,34 +1,46 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import { Navigate, Route, Routes } from 'react-router-dom'
+import Login from './pages/Login'
+import Register from './pages/Register'
+import DashboardLayout from './layouts/DashboardLayout'
+import UsersPage from './pages/UsersPage'
+import ArtistsPage from './pages/ArtistsPage'
+import SongsPage from './pages/SongsPage'
+import AllSongsPage from './pages/AllSongsPage'
+import { ProtectedRoute, PublicRoute } from './routes/AuthGuard'
+import { useAuthStore } from './store'
 import './App.css'
 
 function App() {
-  const [count, setCount] = useState(0)
+  const user = useAuthStore((state) => state.user)
+
+  // Determine dashboard index route dynamically based on role
+  const getDashboardIndex = () => {
+    if (user?.role === 'super_admin') return '/dashboard/users'
+    if (user?.role === 'artist_manager') return '/dashboard/artists'
+    if (user?.role === 'artist') return `/dashboard/artists/${user.id}/songs`
+    return '/dashboard/artists' // fallback 
+  }
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    <Routes>
+      <Route element={<PublicRoute />}>
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+      </Route>
+
+      <Route element={<ProtectedRoute />}>
+        <Route path="/dashboard" element={<DashboardLayout />}>
+          <Route index element={<Navigate to={getDashboardIndex()} replace />} />
+          <Route path="users" element={<UsersPage />} />
+          <Route path="artists" element={<ArtistsPage />} />
+          <Route path="songs" element={<AllSongsPage />} />
+          <Route path="artists/:artistId/songs" element={<SongsPage />} />
+        </Route>
+      </Route>
+
+      {/* Catch-all redirect */}
+      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+    </Routes>
   )
 }
 
