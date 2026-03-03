@@ -17,11 +17,12 @@ import DeleteModal from '../components/DeleteModal'
 import { handleAPIError } from '@/lib/handleError'
 import { toast } from 'sonner'
 import { deleteDataSuccessMessage } from '@/constants/messages'
-import { ROLE_COLORS, ROLE_LABELS } from '@/constants/themeColors'
+import { ROLE_COLORS } from '@/constants/themeColors'
 import { Pencil, Plus, Trash2 } from 'lucide-react'
 import SearchInput from '../components/SearchInput'
 import Pagination from '../components/Pagination'
 import { PAGE_LIMIT } from '@/constants/pagination'
+import { ROLE_LABELS } from '@/constants/constants'
 
 const UsersPage = () => {
   const [users, setUsers] = useState<User[]>([])

@@ -1,5 +1,5 @@
 import { request } from './_axios'
-import { ENDPOINTS } from '../constants/constants'
+import { ENDPOINTS } from '../constants/url'
 import { Artist } from '~/types'
 
 export const getAllArtistsAPI = (params?: { page?: number; limit?: number }) => {

@@ -4,12 +4,6 @@ export const ROLE_COLORS: Record<string, string> = {
   artist: 'bg-amber-100 text-amber-600',
 }
 
-export const ROLE_LABELS: Record<string, string> = {
-  super_admin: 'Super Admin',
-  artist_manager: 'Artist Manager',
-  artist: 'Artist',
-}
-
 export const GENRE_COLORS: Record<string, string> = {
   rnb: 'bg-purple-100 text-purple-600',
   country: 'bg-amber-100 text-amber-600',

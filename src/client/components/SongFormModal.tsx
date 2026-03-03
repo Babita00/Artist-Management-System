@@ -29,7 +29,7 @@ import { createSongAPI, updateSongAPI } from '../services/song.api'
 import { handleFormError } from '@/lib/handleError'
 import { addDataSuccessMessage, editDataSuccessMessage } from '@/constants/messages'
 import { Song } from '~/types'
-import { SONG_GENRES, GenreValue } from '@/constants/genres'
+import { SONG_GENRES, GenreValue } from '@/constants/constants'
 
 type SongFormValues = Omit<Song, 'id' | 'created_at' | 'updated_at' | 'artist_id' | 'genre'> & {
   genre: GenreValue

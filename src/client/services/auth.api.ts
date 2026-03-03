@@ -1,5 +1,5 @@
 import { request } from './_axios'
-import { ENDPOINTS } from '../constants/constants'
+import { ENDPOINTS } from '../constants/url'
 
 export const loginAPI = (data: any) => {
   return request({

@@ -1,5 +1,5 @@
 import { request } from './_axios'
-import { ENDPOINTS } from '../constants/constants'
+import { ENDPOINTS } from '../constants/url'
 import { Song } from '~/types'
 
 export const getAllSongsAPI = (params?: {
