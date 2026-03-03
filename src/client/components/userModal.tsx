@@ -31,6 +31,7 @@ import { createUserAPI, updateUserAPI } from '../services/user.api'
 import { handleFormError } from '@/lib/handleError'
 import { addDataSuccessMessage, editDataSuccessMessage } from '@/constants/messages'
 import { User } from '~/types'
+import { Eye, EyeOff } from 'lucide-react'
 
 const userSchema = z.object({
   first_name: z.string().min(1, 'First name is required'),
@@ -60,6 +61,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
   onSuccess,
 }) => {
   const [isPending, setIsPending] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
   const isEdit = !!initialValue
 
   const form = useForm<UserFormValues>({
@@ -193,10 +195,27 @@ const UserFormModal: React.FC<UserFormModalProps> = ({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      Password {isEdit && <span className="text-muted-foreground font-normal">(leave blank to keep)</span>}
+                      Password {isEdit && <span className="text-muted-foreground font-normal">(leave blank to keep current)</span>}
                     </FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="••••••••" {...field} />
+                      <div className="relative">
+                        <Input
+                          type={showPassword ? 'text' : 'password'}
+                          placeholder="••••••••"
+                          className="pr-10"
+                          {...field}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword((v) => !v)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                          tabIndex={-1}
+                        >
+                          {showPassword
+                            ? <EyeOff className="w-4 h-4" />
+                            : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>

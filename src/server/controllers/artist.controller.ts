@@ -62,22 +62,27 @@ export const importCsv = async (req: Request, res: Response) => {
 
     const rowValues = row.values as any[]
 
-    const artistData = {
-      name: rowValues[1]?.toString(),
-      dob: new Date(rowValues[2]).toISOString().split('T')[0],
-      gender: rowValues[3]?.toString(),
-      address: rowValues[4]?.toString(),
-      first_release_year: parseInt(rowValues[5], 10),
-      no_of_albums_released: parseInt(rowValues[6], 10),
-    }
-
-    const parsedData = artistCreateSchema.safeParse(artistData)
-
-    if (!parsedData.success) {
-      console.log(`Row ${rowNumber} Error:`, parsedData.error.format())
-    }
-
+    // CSV column order: Artist Name | Date of Birth | Gender | First Release | Albums | Location
     try {
+      const artistData = {
+        name: rowValues[1]?.toString().trim(),
+        dob: new Date(rowValues[2]).toISOString().split('T')[0],
+        gender: rowValues[3]?.toString().trim() === 'Female' ? 'F'
+              : rowValues[3]?.toString().trim() === 'Male' ? 'M' : 'O',
+        first_release_year: parseInt(rowValues[4], 10),
+        no_of_albums_released: parseInt(rowValues[5], 10),
+        address: rowValues[6]?.toString().trim() ?? '',
+      }
+
+      const parsedData = artistCreateSchema.safeParse(artistData)
+
+      if (!parsedData.success) {
+        results.failed++
+        const messages = parsedData.error.issues.map(e => e.message).join(', ')
+        results.errors.push(`Row ${rowNumber}: ${messages}`)
+        continue
+      }
+
       await artistService.createArtist(parsedData.data as any)
       results.successful++
     } catch (error: any) {

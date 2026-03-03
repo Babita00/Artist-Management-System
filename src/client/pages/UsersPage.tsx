@@ -17,23 +17,33 @@ import DeleteModal from '../components/DeleteModal'
 import { handleAPIError } from '@/lib/handleError'
 import { toast } from 'sonner'
 import { deleteDataSuccessMessage } from '@/constants/messages'
+import { ROLE_COLORS, ROLE_LABELS } from '@/constants/roleColors'
+import { Pencil, Plus, Trash2 } from 'lucide-react'
+import SearchInput from '../components/SearchInput'
+import Pagination from '../components/Pagination'
+import { PAGE_LIMIT } from '@/constants/pagination'
 
 const UsersPage = () => {
   const [users, setUsers] = useState<User[]>([])
+  const [totalUsers, setTotalUsers] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<User | null>(null)
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null)
   const [page, setPage] = useState(1)
+  const limit = PAGE_LIMIT
 
   const currentUser = useAuthStore(state => state.user)
 
   const loadUsers = async () => {
     setLoading(true)
     try {
-      const resp = await getAllUsersAPI({ page, limit: 10 })
+      const resp = await getAllUsersAPI({ page, limit })
       const userList = Array.isArray(resp) ? resp : (resp as any).users || (resp as any).data || []
+      const total = (resp as any).total ?? userList.length
       setUsers(userList)
+      setTotalUsers(total)
     } catch (err) {
       handleAPIError(err)
     } finally {
@@ -42,9 +52,7 @@ const UsersPage = () => {
   }
 
   useEffect(() => {
-    if (currentUser?.role === 'super_admin') {
-      loadUsers()
-    }
+    if (currentUser?.role === 'super_admin') loadUsers()
   }, [page, currentUser])
 
   if (currentUser?.role !== 'super_admin') {
@@ -73,51 +81,106 @@ const UsersPage = () => {
     }
   }
 
+
+  const totalPages = Math.max(1, Math.ceil(totalUsers / limit))
+
+  const filtered = users.filter(u => {
+    const q = search.toLowerCase()
+    return (
+      `${u.first_name} ${u.last_name}`.toLowerCase().includes(q) ||
+      u.email.toLowerCase().includes(q) ||
+      (u.role ?? '').toLowerCase().includes(q)
+    )
+  })
+
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
+    <div className="p-6 space-y-6">
+      {/* Page header */}
+      <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">User Management</h1>
-          <p className="text-sm text-muted-foreground mt-1">{users.length} total users</p>
+          <h1 className="text-2xl font-bold tracking-tight">User Management</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">{totalUsers} total users</p>
         </div>
-        <Button onClick={handleOpenCreate}>+ Add New User</Button>
+        <Button onClick={handleOpenCreate} className="gap-2">
+          <Plus className="w-4 h-4" />
+          Add User
+        </Button>
       </div>
 
-      <div className="border rounded-md">
+      {/* Card */}
+      <div className="bg-card rounded-xl border shadow-sm">
+        {/* Search */}
+        <div className="p-4 border-b">
+          <SearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder="Search users..."
+          />
+        </div>
+
+        {/* Table */}
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
+            <TableRow className="hover:bg-transparent">
+              <TableHead className="pl-6">Name</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Role</TableHead>
-              <TableHead>Phone</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>Gender</TableHead>
+              <TableHead className="pr-6 text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-10">Loading users...</TableCell>
+                <TableCell colSpan={5} className="text-center py-14 text-muted-foreground">
+                  Loading users...
+                </TableCell>
               </TableRow>
-            ) : users.length === 0 ? (
+            ) : filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-10">No users found.</TableCell>
+                <TableCell colSpan={5} className="text-center py-14 text-muted-foreground">
+                  {search ? 'No users match your search.' : 'No users found.'}
+                </TableCell>
               </TableRow>
             ) : (
-              users.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell className="font-medium">{user.first_name} {user.last_name}</TableCell>
-                  <TableCell>{user.email}</TableCell>
+              filtered.map((user) => (
+                <TableRow key={user.id} className="group">
+                  <TableCell className="pl-6 font-semibold">
+                    {user.first_name} {user.last_name}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">{user.email}</TableCell>
                   <TableCell>
-                    <span className="px-2 py-0.5 bg-primary/10 text-primary text-xs rounded-full font-semibold capitalize">
-                      {user.role?.replace('_', ' ')}
+                    <span
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        ROLE_COLORS[user.role] ?? 'bg-gray-100 text-gray-600'
+                      }`}
+                    >
+                      {ROLE_LABELS[user.role] ?? user.role}
                     </span>
                   </TableCell>
-                  <TableCell>{user.phone}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button variant="outline" size="sm" onClick={() => handleOpenEdit(user)}>Edit</Button>
-                      <Button variant="destructive" size="sm" onClick={() => setDeletingUserId(user.id)}>Delete</Button>
+                  <TableCell className="text-muted-foreground">
+                    {user.gender }
+                  </TableCell>
+                  <TableCell className="pr-6 text-right">
+                    <div className="flex justify-end items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8  text-foreground"
+                        onClick={() => handleOpenEdit(user)}
+                        title="Edit user"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8  text-destructive"
+                        onClick={() => setDeletingUserId(user.id)}
+                        title="Delete user"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -125,12 +188,8 @@ const UsersPage = () => {
             )}
           </TableBody>
         </Table>
-      </div>
 
-      <div className="flex justify-between items-center mt-4">
-        <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(page - 1)}>Previous</Button>
-        <span className="text-sm text-muted-foreground">Page {page}</span>
-        <Button variant="outline" size="sm" disabled={users.length < 10} onClick={() => setPage(page + 1)}>Next</Button>
+        <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
       </div>
 
       <UserFormModal

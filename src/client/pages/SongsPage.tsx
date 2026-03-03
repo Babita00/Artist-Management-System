@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   Table,
@@ -15,126 +15,250 @@ import { Artist, Song } from '~/types'
 import { useAuthStore } from '../store'
 import SongFormModal from '../components/SongFormModal'
 import DeleteModal from '../components/DeleteModal'
+import SearchInput from '../components/SearchInput'
+import Pagination from '../components/Pagination'
+import { PAGE_LIMIT } from '@/constants/pagination'
 import { handleAPIError } from '@/lib/handleError'
 import { toast } from 'sonner'
 import { deleteDataSuccessMessage } from '@/constants/messages'
+import { ArrowLeft, Pencil, Plus, Trash2 } from 'lucide-react'
+
+const GENRE_COLORS: Record<string, string> = {
+  rnb: 'bg-purple-100 text-purple-600',
+  country: 'bg-amber-100 text-amber-600',
+  classic: 'bg-slate-100 text-slate-600',
+  rock: 'bg-red-100 text-red-600',
+  jazz: 'bg-indigo-100 text-indigo-600',
+  pop: 'bg-pink-100 text-pink-600',
+}
 
 const SongsPage = () => {
   const { artistId } = useParams<{ artistId: string }>()
   const navigate = useNavigate()
 
+  const currentUser = useAuthStore((state) => state.user)
+  const canManageSongs = currentUser?.role === 'artist'
+
   const [artist, setArtist] = useState<Artist | null>(null)
   const [songs, setSongs] = useState<Song[]>([])
+  const [totalSongs, setTotalSongs] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
+  const [page, setPage] = useState(1)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingSong, setEditingSong] = useState<Song | null>(null)
   const [deletingSongId, setDeletingSongId] = useState<string | null>(null)
-  const [page, setPage] = useState(1)
 
-  const currentUser = useAuthStore((state) => state.user)
-  const isArtistUser = currentUser?.role === 'artist'
-  const canManageSongs = isArtistUser
+  const limit = PAGE_LIMIT
 
-  const loadArtistContext = async () => {
+  useEffect(() => {
     if (!artistId) return
-    try {
-      const dbArtist = await getArtistByIdAPI(artistId)
-      setArtist((dbArtist as any).data || dbArtist)
-    } catch (err) {
-      handleAPIError(err)
-    }
-  }
 
-  const loadSongs = async () => {
+    const fetchArtist = async () => {
+      try {
+        const resp = await getArtistByIdAPI(artistId)
+        setArtist((resp as any).data || resp)
+      } catch (err) {
+        handleAPIError(err)
+      }
+    }
+
+    fetchArtist()
+  }, [artistId])
+
+ 
+  useEffect(() => {
     if (!artistId) return
-    setLoading(true)
-    try {
-      const resp = await getAllSongsAPI({ page, limit: 10, artist_id: artistId })
-      const songList = Array.isArray(resp)
-        ? resp
-        : (resp as any).songs || (resp as any).data || []
-      setSongs(songList)
-    } catch (err) {
-      handleAPIError(err)
-    } finally {
-      setLoading(false)
-    }
-  }
 
-  useEffect(() => { loadArtistContext() }, [artistId])
-  useEffect(() => { loadSongs() }, [page, artistId])
+    const fetchSongs = async () => {
+      setLoading(true)
+      try {
+        const resp = await getAllSongsAPI({
+          page,
+          limit,
+          artist_id: artistId,
+        })
+
+        const list = Array.isArray(resp)
+          ? resp
+          : (resp as any).songs || (resp as any).data || []
+
+        const total = (resp as any).total ?? list.length
+
+        setSongs(list)
+        setTotalSongs(total)
+      } catch (err) {
+        handleAPIError(err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchSongs()
+  }, [artistId, page])
+
+  const filteredSongs = useMemo(() => {
+    const q = search.toLowerCase()
+    return songs.filter(
+      (s) =>
+        s.title.toLowerCase().includes(q) ||
+        s.album_name.toLowerCase().includes(q) ||
+        s.genre.toLowerCase().includes(q)
+    )
+  }, [songs, search])
+
+  const dominantGenre = useMemo(() => {
+    if (!songs.length) return null
+
+    const counts = songs.reduce<Record<string, number>>((acc, s) => {
+      acc[s.genre] = (acc[s.genre] ?? 0) + 1
+      return acc
+    }, {})
+
+    return Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0]
+  }, [songs])
+
+  const totalPages = Math.max(1, Math.ceil(totalSongs / limit))
+  const colSpan = canManageSongs ? 4 : 3
 
   const handleDelete = async (id: string) => {
     try {
       await deleteSongAPI(id)
       toast.success(deleteDataSuccessMessage('Song'))
-      loadSongs()
+      setDeletingSongId(null)
+      setPage(1)
     } catch (err) {
       handleAPIError(err)
-    } finally {
-      setDeletingSongId(null)
     }
   }
 
   return (
-    <div className="p-6">
-      <div className="mb-4">
-        <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
-          ← Back to Artists
-        </Button>
-      </div>
-
-      <div className="flex justify-between items-center mb-6">
+    <div className="p-6 space-y-6">
+      {/* Header */}
+      <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            {isArtistUser ? 'My Songs' : `Songs by ${artist?.name || 'Artist'}`}
-          </h1>
-          {!isArtistUser && artist && (
-            <p className="text-muted-foreground mt-1 text-sm">Viewing read-only for {artist.name}</p>
-          )}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => navigate(-1)}
+              className="text-muted-foreground hover:text-foreground transition-colors mt-0.5"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+
+            <h1 className="text-2xl font-bold tracking-tight">
+              {artist?.name ?? (canManageSongs ? 'My Songs' : 'Songs')}
+            </h1>
+          </div>
+
+          <p className="text-sm text-muted-foreground mt-0.5 ml-7">
+            {dominantGenre && (
+              <span className="capitalize">{dominantGenre} · </span>
+            )}
+            {totalSongs} {totalSongs === 1 ? 'song' : 'songs'}
+          </p>
         </div>
 
         {canManageSongs && (
-          <Button onClick={() => { setEditingSong(null); setIsModalOpen(true) }}>
-            + Add Song
+          <Button
+            className="gap-2"
+            onClick={() => {
+              setEditingSong(null)
+              setIsModalOpen(true)
+            }}
+          >
+            <Plus className="w-4 h-4" /> Add Song
           </Button>
         )}
       </div>
 
-      <div className="border rounded-md">
+      {/* Card */}
+      <div className="bg-card rounded-xl border shadow-sm">
+        {/* Search */}
+        <div className="p-4 border-b">
+          <SearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder="Search songs..."
+          />
+        </div>
+
+        {/* Table */}
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead>Title</TableHead>
+            <TableRow className="hover:bg-transparent">
+              <TableHead className="pl-6">Title</TableHead>
               <TableHead>Album</TableHead>
               <TableHead>Genre</TableHead>
-              {canManageSongs && <TableHead className="text-right">Actions</TableHead>}
+              {canManageSongs && (
+                <TableHead className="pr-6 text-right">
+                  Actions
+                </TableHead>
+              )}
             </TableRow>
           </TableHeader>
+
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={canManageSongs ? 4 : 3} className="text-center py-10">Loading songs...</TableCell>
+                <TableCell colSpan={colSpan} className="text-center py-14 text-muted-foreground">
+                  Loading songs...
+                </TableCell>
               </TableRow>
-            ) : songs.length === 0 ? (
+            ) : filteredSongs.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={canManageSongs ? 4 : 3} className="text-center py-10">No songs published yet.</TableCell>
+                <TableCell colSpan={colSpan} className="text-center py-14 text-muted-foreground">
+                  {search
+                    ? 'No songs match your search.'
+                    : 'No songs published yet.'}
+                </TableCell>
               </TableRow>
             ) : (
-              songs.map((song) => (
+              filteredSongs.map((song) => (
                 <TableRow key={song.id}>
-                  <TableCell className="font-semibold">{song.title}</TableCell>
-                  <TableCell>{song.album_name}</TableCell>
+                  <TableCell className="pl-6 font-semibold text-primary">
+                    {song.title}
+                  </TableCell>
+
+                  <TableCell className="text-muted-foreground">
+                    {song.album_name}
+                  </TableCell>
+
                   <TableCell>
-                    <span className="capitalize px-2 py-0.5 bg-secondary text-secondary-foreground rounded text-xs font-semibold">
+                    <span
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${
+                        GENRE_COLORS[song.genre] ??
+                        'bg-gray-100 text-gray-600'
+                      }`}
+                    >
                       {song.genre}
                     </span>
                   </TableCell>
+
                   {canManageSongs && (
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button variant="outline" size="sm" onClick={() => { setEditingSong(song); setIsModalOpen(true) }}>Edit</Button>
-                        <Button variant="destructive" size="sm" onClick={() => setDeletingSongId(song.id)}>Delete</Button>
+                    <TableCell className="pr-6 text-right">
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => {
+                            setEditingSong(song)
+                            setIsModalOpen(true)
+                          }}
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive"
+                          onClick={() =>
+                            setDeletingSongId(song.id)
+                          }
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                       </div>
                     </TableCell>
                   )}
@@ -143,27 +267,33 @@ const SongsPage = () => {
             )}
           </TableBody>
         </Table>
+
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+        />
       </div>
 
-      <div className="flex justify-between items-center mt-4">
-        <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(page - 1)}>Previous</Button>
-        <span className="text-sm text-muted-foreground">Page {page}</span>
-        <Button variant="outline" size="sm" disabled={songs.length < 10} onClick={() => setPage(page + 1)}>Next</Button>
-      </div>
-
+      {/* Modals */}
       <SongFormModal
         isOpen={isModalOpen}
         initialValue={editingSong}
         artistId={artistId!}
         onClose={() => setIsModalOpen(false)}
-        onSuccess={loadSongs}
+        onSuccess={() => {
+          setIsModalOpen(false)
+          setPage(1)
+        }}
       />
 
       <DeleteModal
         isOpen={!!deletingSongId}
         title="Song"
         onClose={() => setDeletingSongId(null)}
-        onConfirm={() => deletingSongId && handleDelete(deletingSongId)}
+        onConfirm={() =>
+          deletingSongId && handleDelete(deletingSongId)
+        }
       />
     </div>
   )
